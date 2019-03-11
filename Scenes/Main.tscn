@@ -1,0 +1,287 @@
+[gd_scene load_steps=11 format=2]
+
+[ext_resource path="res://Materials/packed_ice.tres" type="Material" id=1]
+[ext_resource path="res://Scripts/IceBlock.gd" type="Script" id=2]
+[ext_resource path="res://Materials/clear_ice.tres" type="Material" id=3]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends KinematicBody
+
+const GRAVITY = -24.8
+var vel = Vector3()
+const MAX_SPEED = 10
+const JUMP_SPEED = 8
+const ACCEL= 2.5
+
+var dir = Vector3()
+
+const DEACCEL= 8
+const MAX_SLOPE_ANGLE = 40
+
+var camera
+var rotation_helper
+
+var MOUSE_SENSITIVITY = 0.05
+
+func _ready():
+	camera = $Rotation_Helper/Camera
+	rotation_helper = $Rotation_Helper
+
+	#Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	
+func raycast():
+	
+	dir.y = 0
+	dir = dir.normalized()
+	
+	var space_state = get_world().direct_space_state
+	var loc = get_global_transform().origin
+	
+	# use global coordinates, not local to node
+	var result = space_state.intersect_ray(loc, loc + dir * 2)
+	
+	if not result.empty():
+		print(result[\"collider\"])
+		vel = Vector3.ZERO
+		
+		var col = result[\"collider\"]
+		
+		if col is RigidBody:
+			col.apply_impulse(result[\"position\"], dir)
+		
+		return true
+		
+	return false
+	
+func _physics_process(delta):
+	
+	process_input()
+	
+	if not raycast():
+		process_movement(delta)
+
+
+func process_input():
+
+	# ----------------------------------
+	# Walking
+	dir = Vector3()
+	var cam_xform = camera.get_global_transform()
+
+	var input_movement_vector = Vector2()
+
+	if Input.is_action_pressed(\"movement_forward\"):
+		input_movement_vector.y += 1
+	if Input.is_action_pressed(\"movement_backward\"):
+		input_movement_vector.y -= 1
+	if Input.is_action_pressed(\"movement_left\"):
+		input_movement_vector.x -= 1
+	if Input.is_action_pressed(\"movement_right\"):
+		input_movement_vector.x = 1
+
+	input_movement_vector = input_movement_vector.normalized()
+
+	dir += -cam_xform.basis.z.normalized() * input_movement_vector.y
+	dir += cam_xform.basis.x.normalized() * input_movement_vector.x
+	# ----------------------------------
+
+	# ----------------------------------
+	# Jumping
+	if is_on_floor():
+		if Input.is_action_just_pressed(\"movement_jump\"):
+			vel.y = JUMP_SPEED
+	# ----------------------------------
+
+	# ----------------------------------
+	# Capturing/Freeing the cursor
+	if Input.is_action_just_pressed(\"ui_cancel\"):
+		if Input.get_mouse_mode() == Input.MOUSE_MODE_VISIBLE:
+			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+		else:
+			Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	# ----------------------------------
+
+func process_movement(delta):
+	
+	dir.y = 0
+	dir = dir.normalized()
+
+	vel.y += delta*GRAVITY
+
+	var hvel = vel
+	hvel.y = 0
+
+	var target = dir
+	target *= MAX_SPEED
+
+	var accel
+	if dir.dot(hvel) > 0:
+		accel = ACCEL
+	else:
+		accel = DEACCEL
+
+	hvel = hvel.linear_interpolate(target, accel*delta)
+	vel.x = hvel.x
+	vel.z = hvel.z
+	
+	#$RayCast.cast_to = - dir * 2
+
+	#print(dir)
+	#$RayCast.cast_to = dir * 2
+	#$RayCast.cast_to.x = -$RayCast.cast_to.x
+
+	#self.global_translate(
+
+	#$RayCast.transform = $RayCast.transform.looking_at(transform.origin + dir, Vector3(0,1,0))
+
+#	var col = $RayCast.get_collider()
+#
+#	if col == null:
+#		vel = move_and_slide(vel,Vector3(0,1,0), 0.05, 4, deg2rad(MAX_SLOPE_ANGLE))
+#	else:
+#		vel = Vector3.ZERO
+		
+	#print(col)
+
+	#vel = move_and_slide(vel)
+#	var col = move_and_collide(vel)
+#
+#	if col != null:
+#		vel = Vector3.ZERO
+
+	vel = move_and_slide(vel,Vector3(0,1,0), 0.05, 4, deg2rad(MAX_SLOPE_ANGLE))
+
+func _input(event):
+	
+	if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
+	
+		if event is InputEventMouseMotion:
+
+			rotation_helper.rotate_x(deg2rad(-event.relative.y * MOUSE_SENSITIVITY))
+			self.rotate_y(deg2rad(event.relative.x * MOUSE_SENSITIVITY * -1))
+
+			var camera_rot = rotation_helper.rotation_degrees
+			camera_rot.x = clamp(camera_rot.x, -70, 70)
+			rotation_helper.rotation_degrees = camera_rot
+
+		if Input.is_action_pressed(\"left_click\"):
+			pass
+	
+	else:
+		
+		if Input.is_action_pressed(\"left_click\"):
+			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+			"
+
+[sub_resource type="SphereShape" id=2]
+
+[sub_resource type="BoxShape" id=3]
+extents = Vector3( 0.54346, 1, 0.477195 )
+
+[sub_resource type="SphereMesh" id=4]
+
+[sub_resource type="BoxShape" id=7]
+extents = Vector3( 4.01596, 1, 0.897843 )
+
+[sub_resource type="BoxShape" id=5]
+extents = Vector3( 1, 0.96375, 3.78078 )
+
+[sub_resource type="CubeMesh" id=6]
+
+[node name="Spatial" type="Spatial"]
+
+[node name="Sun" type="DirectionalLight" parent="."]
+transform = Transform( 1, 0, 0, 0, -0.326157, 0.945316, 0, -0.945316, -0.326157, 0, 30.4259, 0 )
+light_energy = 0.35
+
+[node name="Floor" type="CSGCylinder" parent="."]
+use_collision = true
+radius = 19.3785
+sides = 25
+
+[node name="Player" type="KinematicBody" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -4.34015, 1.65008, 7.08217 )
+script = SubResource( 1 )
+
+[node name="Feet" type="CollisionShape" parent="Player"]
+transform = Transform( 0.446687, 0, 0, 0, 0.446687, 0, 0, 0, 0.446687, 0, -0.663391, 0 )
+shape = SubResource( 2 )
+
+[node name="Body" type="CollisionShape" parent="Player"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.618469, 0 )
+shape = SubResource( 3 )
+
+[node name="Rotation_Helper" type="Spatial" parent="Player"]
+
+[node name="Model" type="Spatial" parent="Player/Rotation_Helper"]
+visible = false
+
+[node name="MeshInstance" type="MeshInstance" parent="Player/Rotation_Helper/Model"]
+cast_shadow = 0
+mesh = SubResource( 4 )
+material/0 = null
+
+[node name="Viewport" type="Viewport" parent="Player/Rotation_Helper"]
+msaa = 2
+
+[node name="Camera" type="Camera" parent="Player/Rotation_Helper"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.928987, 0 )
+
+[node name="RayCast" type="RayCast" parent="Player"]
+enabled = true
+cast_to = Vector3( 0, 0, -1 )
+
+[node name="PackedIce" type="Spatial" parent="."]
+
+[node name="CSGBox" type="CSGBox" parent="PackedIce" groups=[
+"walls",
+]]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0.997917, 1.65282, -0.350089 )
+use_collision = true
+width = 23.1455
+depth = 24.9649
+material = ExtResource( 1 )
+
+[node name="CSGBox2" type="CSGBox" parent="PackedIce/CSGBox" groups=[
+"walls",
+]]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.136876, 0 )
+operation = 2
+width = 17.9768
+height = 5.96059
+depth = 21.4195
+material = ExtResource( 1 )
+
+[node name="CSGBox3" type="CSGBox" parent="PackedIce/CSGBox" groups=[
+"walls",
+]]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -10.42, 0.136876, -1.17872 )
+operation = 2
+width = 10.7411
+height = 5.96059
+depth = 5.01191
+material = ExtResource( 1 )
+
+[node name="Area" type="Area" parent="PackedIce"]
+
+[node name="CollisionShape" type="CollisionShape" parent="PackedIce/Area"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -6.62322, 1.37199, -11.9205 )
+shape = SubResource( 7 )
+disabled = true
+
+[node name="IceBlocks" type="Spatial" parent="."]
+
+[node name="IceBlock" type="Spatial" parent="IceBlocks"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -6.16881, 1.73815, -0.969601 )
+script = ExtResource( 2 )
+
+[node name="RigidBody" type="RigidBody" parent="IceBlocks/IceBlock"]
+
+[node name="Box" type="CollisionShape" parent="IceBlocks/IceBlock/RigidBody"]
+shape = SubResource( 5 )
+
+[node name="MeshInstance" type="MeshInstance" parent="IceBlocks/IceBlock/RigidBody"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 3.79108, 0, 0, 0 )
+mesh = SubResource( 6 )
+material/0 = ExtResource( 3 )
+
