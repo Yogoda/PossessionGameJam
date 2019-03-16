@@ -1,8 +1,8 @@
-[gd_scene load_steps=11 format=2]
+[gd_scene load_steps=8 format=2]
 
 [ext_resource path="res://Materials/packed_ice.tres" type="Material" id=1]
-[ext_resource path="res://Scripts/IceBlock.gd" type="Script" id=2]
-[ext_resource path="res://Materials/clear_ice.tres" type="Material" id=3]
+[ext_resource path="res://Prefabs/IceBlock.tscn" type="PackedScene" id=2]
+[ext_resource path="res://Prefabs/Penguin/Penguin.tscn" type="PackedScene" id=3]
 
 [sub_resource type="GDScript" id=1]
 script/source = "extends KinematicBody
@@ -23,6 +23,8 @@ var rotation_helper
 
 var MOUSE_SENSITIVITY = 0.05
 
+const PUSH_STRENGTH = 3
+
 func _ready():
 	camera = $Rotation_Helper/Camera
 	rotation_helper = $Rotation_Helper
@@ -37,17 +39,19 @@ func raycast():
 	var space_state = get_world().direct_space_state
 	var loc = get_global_transform().origin
 	
+	var check_length = 1.5
+	
 	# use global coordinates, not local to node
-	var result = space_state.intersect_ray(loc, loc + dir * 2)
+	var result = space_state.intersect_ray(loc, loc + dir * check_length)
 	
 	if not result.empty():
-		print(result[\"collider\"])
+		#print(result[\"collider\"])
 		vel = Vector3.ZERO
 		
 		var col = result[\"collider\"]
 		
 		if col is RigidBody:
-			col.apply_impulse(result[\"position\"], dir)
+			col.apply_impulse(result[\"position\"], result[\"normal\"] * -1 * PUSH_STRENGTH)
 		
 		return true
 		
@@ -87,9 +91,9 @@ func process_input():
 
 	# ----------------------------------
 	# Jumping
-	if is_on_floor():
-		if Input.is_action_just_pressed(\"movement_jump\"):
-			vel.y = JUMP_SPEED
+	#if is_on_floor():
+	#	if Input.is_action_just_pressed(\"movement_jump\"):
+	#		vel.y = JUMP_SPEED
 	# ----------------------------------
 
 	# ----------------------------------
@@ -180,19 +184,11 @@ extents = Vector3( 0.54346, 1, 0.477195 )
 
 [sub_resource type="SphereMesh" id=4]
 
-[sub_resource type="BoxShape" id=7]
-extents = Vector3( 4.01596, 1, 0.897843 )
-
-[sub_resource type="BoxShape" id=5]
-extents = Vector3( 1, 0.96375, 3.78078 )
-
-[sub_resource type="CubeMesh" id=6]
-
 [node name="Spatial" type="Spatial"]
 
 [node name="Sun" type="DirectionalLight" parent="."]
 transform = Transform( 1, 0, 0, 0, -0.326157, 0.945316, 0, -0.945316, -0.326157, 0, 30.4259, 0 )
-light_energy = 0.35
+light_energy = 0.95
 
 [node name="Floor" type="CSGCylinder" parent="."]
 use_collision = true
@@ -200,6 +196,7 @@ radius = 19.3785
 sides = 25
 
 [node name="Player" type="KinematicBody" parent="."]
+editor/display_folded = true
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -4.34015, 1.65008, 7.08217 )
 script = SubResource( 1 )
 
@@ -227,11 +224,8 @@ msaa = 2
 [node name="Camera" type="Camera" parent="Player/Rotation_Helper"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.928987, 0 )
 
-[node name="RayCast" type="RayCast" parent="Player"]
-enabled = true
-cast_to = Vector3( 0, 0, -1 )
-
 [node name="PackedIce" type="Spatial" parent="."]
+editor/display_folded = true
 
 [node name="CSGBox" type="CSGBox" parent="PackedIce" groups=[
 "walls",
@@ -239,6 +233,7 @@ cast_to = Vector3( 0, 0, -1 )
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0.997917, 1.65282, -0.350089 )
 use_collision = true
 width = 23.1455
+height = 2.56388
 depth = 24.9649
 material = ExtResource( 1 )
 
@@ -262,26 +257,20 @@ height = 5.96059
 depth = 5.01191
 material = ExtResource( 1 )
 
-[node name="Area" type="Area" parent="PackedIce"]
-
-[node name="CollisionShape" type="CollisionShape" parent="PackedIce/Area"]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -6.62322, 1.37199, -11.9205 )
-shape = SubResource( 7 )
-disabled = true
-
 [node name="IceBlocks" type="Spatial" parent="."]
+editor/display_folded = true
 
-[node name="IceBlock" type="Spatial" parent="IceBlocks"]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -6.16881, 1.73815, -0.969601 )
-script = ExtResource( 2 )
+[node name="IceBlock" parent="IceBlocks" instance=ExtResource( 2 )]
 
-[node name="RigidBody" type="RigidBody" parent="IceBlocks/IceBlock"]
+[node name="IceBlock2" parent="IceBlocks" instance=ExtResource( 2 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0.734426, 1.73815, 5.73693 )
 
-[node name="Box" type="CollisionShape" parent="IceBlocks/IceBlock/RigidBody"]
-shape = SubResource( 5 )
+[node name="Penguin" parent="." instance=ExtResource( 3 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 4.42863, 0.672191, -5.75502 )
 
-[node name="MeshInstance" type="MeshInstance" parent="IceBlocks/IceBlock/RigidBody"]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 3.79108, 0, 0, 0 )
-mesh = SubResource( 6 )
-material/0 = ExtResource( 3 )
+[node name="Penguin2" parent="." instance=ExtResource( 3 )]
+transform = Transform( -1, 0, -8.74228e-008, 0, 1, 0, 8.74228e-008, 0, -1, 5.69952, 0.672191, 5.53645 )
+
+[node name="Penguin3" parent="." instance=ExtResource( 3 )]
+transform = Transform( -4.37114e-008, 0, -1, 0, 1, 0, 1, 0, -4.37114e-008, 6.22279, 0.672191, -0.337146 )
 

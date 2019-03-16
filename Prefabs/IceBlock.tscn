@@ -1,0 +1,52 @@
+[gd_scene load_steps=6 format=2]
+
+[sub_resource type="PhysicsMaterial" id=1]
+friction = 0.1
+
+[sub_resource type="BoxShape" id=2]
+extents = Vector3( 1, 0.738512, 3.78078 )
+
+[sub_resource type="SphereShape" id=3]
+radius = 0.648873
+
+[sub_resource type="CubeMesh" id=6]
+
+[sub_resource type="SpatialMaterial" id=7]
+flags_transparent = true
+albedo_color = Color( 0.262745, 0.882353, 0.843137, 0.960784 )
+metallic = 1.0
+metallic_specular = 0.0
+roughness = 0.16
+emission_enabled = true
+emission = Color( 0.14902, 0.466667, 0.529412, 1 )
+emission_energy = 1.0
+emission_operator = 0
+emission_on_uv2 = false
+refraction_enabled = true
+refraction_scale = 0.09
+refraction_texture_channel = 0
+
+[node name="IceBlock" type="Spatial"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -6.16881, 1.73815, -0.969601 )
+
+[node name="RigidBody" type="RigidBody" parent="." groups=[
+"ice_block",
+]]
+physics_material_override = SubResource( 1 )
+axis_lock_angular_x = true
+axis_lock_angular_y = true
+axis_lock_angular_z = true
+
+[node name="Box" type="CollisionShape" parent="RigidBody"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.276244, 0 )
+shape = SubResource( 2 )
+
+[node name="Sphere" type="CollisionShape" parent="RigidBody"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.384674, 0 )
+shape = SubResource( 3 )
+
+[node name="MeshInstance" type="MeshInstance" parent="RigidBody"]
+transform = Transform( 1, 0, 0, 0, 1.15713, 0, 0, 0, 3.79108, 0, 0.122675, 0 )
+mesh = SubResource( 6 )
+material/0 = SubResource( 7 )
+
