@@ -1,10 +1,11 @@
-[gd_scene load_steps=6 format=2]
+[gd_scene load_steps=7 format=2]
 
 [ext_resource path="res://Prefabs/CactB.tscn" type="PackedScene" id=1]
-[ext_resource path="res://Prefabs/Player.tscn" type="PackedScene" id=2]
-[ext_resource path="res://Materials/packed_ice.tres" type="Material" id=3]
-[ext_resource path="res://Prefabs/IceBlock.tscn" type="PackedScene" id=4]
-[ext_resource path="res://Prefabs/Penguin/Penguin.tscn" type="PackedScene" id=5]
+[ext_resource path="res://Materials/packed_ice.tres" type="Material" id=2]
+[ext_resource path="res://Prefabs/IceBlock.tscn" type="PackedScene" id=3]
+[ext_resource path="res://Prefabs/Penguin/Penguin.tscn" type="PackedScene" id=4]
+[ext_resource path="res://Prefabs/UI.tscn" type="PackedScene" id=5]
+[ext_resource path="res://Prefabs/Player.tscn" type="PackedScene" id=6]
 
 [node name="Spatial" type="Spatial"]
 
@@ -13,6 +14,7 @@ transform = Transform( 1, 0, 0, 0, -0.326157, 0.945316, 0, -0.945316, -0.326157,
 light_energy = 0.95
 
 [node name="Floor" type="CSGCylinder" parent="."]
+editor/display_folded = true
 use_collision = true
 radius = 19.3785
 sides = 25
@@ -25,8 +27,6 @@ wait_time = 5.0
 one_shot = true
 autostart = true
 
-[node name="Player" parent="." instance=ExtResource( 2 )]
-
 [node name="PackedIce" type="Spatial" parent="."]
 
 [node name="CSGBox" type="CSGBox" parent="PackedIce" groups=[
@@ -37,7 +37,7 @@ use_collision = true
 width = 23.1455
 height = 2.56388
 depth = 24.9649
-material = ExtResource( 3 )
+material = ExtResource( 2 )
 
 [node name="CSGBox2" type="CSGBox" parent="PackedIce/CSGBox" groups=[
 "walls",
@@ -47,7 +47,7 @@ operation = 2
 width = 17.9768
 height = 5.96059
 depth = 21.4195
-material = ExtResource( 3 )
+material = ExtResource( 2 )
 
 [node name="CSGBox3" type="CSGBox" parent="PackedIce/CSGBox" groups=[
 "walls",
@@ -57,22 +57,26 @@ operation = 2
 width = 10.7411
 height = 5.96059
 depth = 3.03781
-material = ExtResource( 3 )
+material = ExtResource( 2 )
 
 [node name="IceBlocks" type="Spatial" parent="."]
 
-[node name="IceBlock" parent="IceBlocks" instance=ExtResource( 4 )]
+[node name="IceBlock" parent="IceBlocks" instance=ExtResource( 3 )]
 
-[node name="IceBlock2" parent="IceBlocks" instance=ExtResource( 4 )]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0.734426, 1.73815, 5.73693 )
+[node name="IceBlock2" parent="IceBlocks" instance=ExtResource( 3 )]
+transform = Transform( -4.37114e-008, 0, 1, 0, 1, 0, -1, 0, -4.37114e-008, 0.734426, 1.73815, 5.73693 )
 
-[node name="Penguin" parent="." instance=ExtResource( 5 )]
+[node name="Penguin" parent="." instance=ExtResource( 4 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 4.42863, 0.672191, -5.75502 )
 
-[node name="Penguin2" parent="." instance=ExtResource( 5 )]
+[node name="Penguin2" parent="." instance=ExtResource( 4 )]
 transform = Transform( -1, 0, -8.74228e-008, 0, 1, 0, 8.74228e-008, 0, -1, 5.69952, 0.672191, 5.53645 )
 
-[node name="Penguin3" parent="." instance=ExtResource( 5 )]
+[node name="Penguin3" parent="." instance=ExtResource( 4 )]
 transform = Transform( -4.37114e-008, 0, -1, 0, 1, 0, 1, 0, -4.37114e-008, 6.22279, 0.672191, -0.337146 )
+
+[node name="UI" parent="." instance=ExtResource( 5 )]
+
+[node name="Player" parent="." instance=ExtResource( 6 )]
 
 [connection signal="timeout" from="Floor/CactB/Timer" to="Floor/CactB" method="cut"]

@@ -23,7 +23,7 @@ func _on_play_pressed():
 	print(\"play\")
 	
 	var result = get_tree().change_scene(\"res://Scenes/Main.tscn\")
-"
+	"
 
 [sub_resource type="StyleBoxFlat" id=1]
 bg_color = Color( 0.54902, 0.666667, 0.870588, 0.705882 )

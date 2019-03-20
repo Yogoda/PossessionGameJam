@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=2]
+[gd_scene load_steps=5 format=2]
 
 [sub_resource type="GDScript" id=1]
 script/source = "extends KinematicBody
@@ -19,15 +19,47 @@ var rotation_helper
 
 var MOUSE_SENSITIVITY = 0.05
 
+const PUSH_STRENGTH = 3
+
 func _ready():
 	camera = $Rotation_Helper/Camera
 	rotation_helper = $Rotation_Helper
 
 	#Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
-
+	
+func raycast():
+	
+	dir.y = 0
+	dir = dir.normalized()
+	
+	var space_state = get_world().direct_space_state
+	var loc = get_global_transform().origin
+	
+	var check_length = 1.5
+	
+	# use global coordinates, not local to node
+	var result = space_state.intersect_ray(loc, loc + dir * check_length)
+	
+	if not result.empty():
+		#print(result[\"collider\"])
+		vel = Vector3.ZERO
+		
+		var col = result[\"collider\"]
+		
+		if col is RigidBody:
+			col.apply_impulse(result[\"position\"], result[\"normal\"] * -1 * PUSH_STRENGTH)
+		
+		return true
+		
+	return false
+	
 func _physics_process(delta):
+	
 	process_input()
-	process_movement(delta)
+	
+	if not raycast():
+		process_movement(delta)
+
 
 func process_input():
 
@@ -55,9 +87,9 @@ func process_input():
 
 	# ----------------------------------
 	# Jumping
-	if is_on_floor():
-		if Input.is_action_just_pressed(\"movement_jump\"):
-			vel.y = JUMP_SPEED
+	#if is_on_floor():
+	#	if Input.is_action_just_pressed(\"movement_jump\"):
+	#		vel.y = JUMP_SPEED
 	# ----------------------------------
 
 	# ----------------------------------
@@ -70,6 +102,7 @@ func process_input():
 	# ----------------------------------
 
 func process_movement(delta):
+	
 	dir.y = 0
 	dir = dir.normalized()
 
@@ -90,13 +123,33 @@ func process_movement(delta):
 	hvel = hvel.linear_interpolate(target, accel*delta)
 	vel.x = hvel.x
 	vel.z = hvel.z
-	vel = move_and_slide(vel,Vector3(0,1,0), 0.05, 4, deg2rad(MAX_SLOPE_ANGLE))
+	
+	#$RayCast.cast_to = - dir * 2
+
+	#print(dir)
+	#$RayCast.cast_to = dir * 2
+	#$RayCast.cast_to.x = -$RayCast.cast_to.x
+
+	#self.global_translate(
+
+	#$RayCast.transform = $RayCast.transform.looking_at(transform.origin + dir, Vector3(0,1,0))
+
+#	var col = $RayCast.get_collider()
+#
+#	if col == null:
+#		vel = move_and_slide(vel,Vector3(0,1,0), 0.05, 4, deg2rad(MAX_SLOPE_ANGLE))
+#	else:
+#		vel = Vector3.ZERO
+		
+	#print(col)
 
 	#vel = move_and_slide(vel)
 #	var col = move_and_collide(vel)
 #
 #	if col != null:
 #		vel = Vector3.ZERO
+
+	vel = move_and_slide(vel,Vector3(0,1,0), 0.05, 4, deg2rad(MAX_SLOPE_ANGLE))
 
 func _input(event):
 	
@@ -122,22 +175,31 @@ func _input(event):
 
 [sub_resource type="SphereShape" id=2]
 
-[sub_resource type="SphereMesh" id=3]
+[sub_resource type="BoxShape" id=3]
+extents = Vector3( 0.54346, 1, 0.477195 )
 
-[node name="KinematicBody" type="KinematicBody"]
-transform = Transform( -0.424552, 0, -0.905403, 0, 1, 0, 0.905403, 0, -0.424552, 11.2025, 2.59585, 7.99639 )
+[sub_resource type="SphereMesh" id=4]
+
+[node name="Player" type="KinematicBody"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -4.34015, 1.65008, 7.08217 )
 script = SubResource( 1 )
 
-[node name="CollisionShape" type="CollisionShape" parent="."]
+[node name="Feet" type="CollisionShape" parent="."]
+transform = Transform( 0.446687, 0, 0, 0, 0.446687, 0, 0, 0, 0.446687, 0, -0.663391, 0 )
 shape = SubResource( 2 )
+
+[node name="Body" type="CollisionShape" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.618469, 0 )
+shape = SubResource( 3 )
 
 [node name="Rotation_Helper" type="Spatial" parent="."]
 
 [node name="Model" type="Spatial" parent="Rotation_Helper"]
+visible = false
 
 [node name="MeshInstance" type="MeshInstance" parent="Rotation_Helper/Model"]
 cast_shadow = 0
-mesh = SubResource( 3 )
+mesh = SubResource( 4 )
 material/0 = null
 
 [node name="Viewport" type="Viewport" parent="Rotation_Helper"]
